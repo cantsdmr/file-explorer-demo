@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import BaupalFile, { BaupalFileType, FileKind } from './BaupalFile'
 import FolderIcon from '@mui/icons-material/Folder';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useState } from 'react';
+import InputModal from './InputModal';
 
 export interface BaupalFileColumn {
     file?: BaupalFileType
@@ -27,17 +29,33 @@ const actions = [
 const FileColumn = (props: Props) => {
     const { file, depth, selectedFile, onFileSelect, onItemAddition, onItemDeletion } = props
 
+    const [showModal, setShowModal] = useState(false)
+    const [inputValue, setInputValue] = useState({
+        name: 'New Folder',
+        type: FileKind.Folder
+    })
+
     const handleFileSelection = (file: BaupalFileType) => {
         onFileSelect(file)
     }
 
     const handleItemAddition = (type: FileKind, name: string) => {
-        const pathName = name.split(' ').join('_').toLowerCase()
+        setShowModal(true)
+        setInputValue({
+            name,
+            type
+        })
+    }
+
+    const completeItemAddition = (value: string) => {
+        setShowModal(false)
+
+        const pathName = value.split(' ').join('_').toLowerCase()
         const newItem = {
             id: uuidv4(),
-            name: name,
+            name: value,
             path: file?.path.concat(depth === 0 ? '' : '/', pathName),
-            type: type,
+            type: inputValue.type,
             parentFile: file,
             subFiles: []
         } as BaupalFileType
@@ -108,6 +126,12 @@ const FileColumn = (props: Props) => {
             {file?.type === FileKind.RegularFile && <>
                 {renderRegularFileContent(file)}
             </>}
+
+            {showModal && <InputModal
+                openModal={showModal}
+                defaultValue={inputValue.name}
+                onClose={() => setShowModal(false)}
+                onSave={(value) => completeItemAddition(value)} />}
         </div>
     )
 }
